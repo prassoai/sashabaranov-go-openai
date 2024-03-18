@@ -2,14 +2,13 @@ package openai_test
 
 import (
 	"context"
-
-	openai "github.com/sashabaranov/go-openai"
-	"github.com/sashabaranov/go-openai/internal/test/checks"
-
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
+
+	openai "github.com/sashabaranov/go-openai"
+	"github.com/sashabaranov/go-openai/internal/test/checks"
 )
 
 // TestAssistant Tests the assistant endpoint of the API using the mocked server.
@@ -218,6 +217,21 @@ func TestRun(t *testing.T) {
 		},
 	})
 	checks.NoError(t, err, "CreateThreadAndRun error")
+
+	_, err = client.CreateThreadAndStream(ctx, openai.CreateThreadAndRunRequest{
+		RunRequest: openai.RunRequest{
+			AssistantID: assistantID,
+		},
+		Thread: openai.ThreadRequest{
+			Messages: []openai.ThreadMessage{
+				{
+					Role:    openai.ThreadMessageRoleUser,
+					Content: "Hello, World!",
+				},
+			},
+		},
+	})
+	checks.NoError(t, err, "CreateThreadAndStream error")
 
 	_, err = client.RetrieveRunStep(ctx, threadID, runID, stepID)
 	checks.NoError(t, err, "RetrieveRunStep error")

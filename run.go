@@ -105,6 +105,11 @@ type CreateThreadAndRunRequest struct {
 	Thread ThreadRequest `json:"thread"`
 }
 
+type CreateThreadAndStreamRequest struct {
+	CreateThreadAndRunRequest
+	Stream bool `json:"stream"`
+}
+
 type RunStep struct {
 	ID          string         `json:"id"`
 	Object      string         `json:"object"`
@@ -281,7 +286,8 @@ func (c *Client) SubmitToolOutputs(
 	ctx context.Context,
 	threadID string,
 	runID string,
-	request SubmitToolOutputsRequest) (response Run, err error) {
+	request SubmitToolOutputsRequest,
+) (response Run, err error) {
 	urlSuffix := fmt.Sprintf("/threads/%s/runs/%s/submit_tool_outputs", threadID, runID)
 	req, err := c.newRequest(
 		ctx,
@@ -302,7 +308,8 @@ func (c *Client) SubmitToolOutputs(
 func (c *Client) CancelRun(
 	ctx context.Context,
 	threadID string,
-	runID string) (response Run, err error) {
+	runID string,
+) (response Run, err error) {
 	urlSuffix := fmt.Sprintf("/threads/%s/runs/%s/cancel", threadID, runID)
 	req, err := c.newRequest(
 		ctx,
@@ -321,7 +328,8 @@ func (c *Client) CancelRun(
 // CreateThreadAndRun submits tool outputs.
 func (c *Client) CreateThreadAndRun(
 	ctx context.Context,
-	request CreateThreadAndRunRequest) (response Run, err error) {
+	request CreateThreadAndRunRequest,
+) (response Run, err error) {
 	urlSuffix := "/threads/runs"
 	req, err := c.newRequest(
 		ctx,
@@ -335,6 +343,45 @@ func (c *Client) CreateThreadAndRun(
 	}
 
 	err = c.sendRequest(req, &response)
+	return
+}
+
+type AssistantStreamEvent struct {
+	ID        string                          `json:"id"`
+	Object    string                          `json:"object"`
+	CreatedAt int64                           `json:"created_at"`
+	Metadata  map[string]any                  `json:"metadata"`
+	Delta     ChatCompletionStreamChoiceDelta `json:"delta"`
+}
+
+type AssistantStream struct {
+	streamReader *streamReader[AssistantStreamEvent]
+}
+
+func (c *Client) CreateThreadAndStream(ctx context.Context, request CreateThreadAndRunRequest) (stream *AssistantStream, err error) {
+	urlSuffix := "/threads/runs"
+	sr := CreateThreadAndStreamRequest{
+		CreateThreadAndRunRequest: request,
+		Stream:                    true,
+	}
+	req, err := c.newRequest(
+		ctx,
+		http.MethodPost,
+		c.fullURL(urlSuffix),
+		withBody(sr),
+		withBetaAssistantV1(),
+	)
+	if err != nil {
+		return
+	}
+
+	resp, err := sendRequestStream[AssistantStreamEvent](c, req)
+	if err != nil {
+		return
+	}
+	stream = &AssistantStream{
+		streamReader: resp,
+	}
 	return
 }
 
