@@ -346,12 +346,18 @@ func (c *Client) CreateThreadAndRun(
 	return
 }
 
+type AssistantStreamEventDelta struct {
+	Role    string           `json:"role"`
+	Content []MessageContent `json:"content"`
+	FileIDs []string         `json:"file_ids"`
+}
+
 type AssistantStreamEvent struct {
-	ID        string                          `json:"id"`
-	Object    string                          `json:"object"`
-	CreatedAt int64                           `json:"created_at"`
-	Metadata  map[string]any                  `json:"metadata"`
-	Delta     ChatCompletionStreamChoiceDelta `json:"delta"`
+	ID     string                    `json:"id"`
+	Object string                    `json:"object"`
+	Delta  AssistantStreamEventDelta `json:"delta"`
+	// CreatedAt int64                     `json:"created_at"`
+	// Metadata  map[string]any            `json:"metadata"`
 }
 
 type AssistantStream struct {
