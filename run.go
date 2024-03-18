@@ -355,7 +355,7 @@ type AssistantStreamEvent struct {
 }
 
 type AssistantStream struct {
-	streamReader *streamReader[AssistantStreamEvent]
+	*streamReader[AssistantStreamEvent]
 }
 
 func (c *Client) CreateThreadAndStream(ctx context.Context, request CreateThreadAndRunRequest) (stream *AssistantStream, err error) {
