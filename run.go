@@ -80,6 +80,11 @@ type RunRequest struct {
 	Metadata               map[string]any `json:"metadata,omitempty"`
 }
 
+type RunRequestStreaming struct {
+	RunRequest
+	Stream bool `json:"stream"`
+}
+
 type RunModifyRequest struct {
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
@@ -404,6 +409,35 @@ func (c *Client) CreateThreadAndStream(ctx context.Context, request CreateThread
 		http.MethodPost,
 		c.fullURL(urlSuffix),
 		withBody(sr),
+		withBetaAssistantV1(),
+	)
+	if err != nil {
+		return
+	}
+
+	resp, err := sendRequestStream[AssistantStreamEvent](c, req)
+	if err != nil {
+		return
+	}
+	stream = &AssistantStream{
+		streamReader: resp,
+	}
+	return
+}
+
+func (c *Client) CreateRunStreaming(ctx context.Context, threadID string, request RunRequest) (stream *AssistantStream, err error) {
+	urlSuffix := fmt.Sprintf("/threads/%s/runs", threadID)
+
+	r := RunRequestStreaming{
+		RunRequest: request,
+		Stream:     true,
+	}
+
+	req, err := c.newRequest(
+		ctx,
+		http.MethodPost,
+		c.fullURL(urlSuffix),
+		withBody(r),
 		withBetaAssistantV1(),
 	)
 	if err != nil {
