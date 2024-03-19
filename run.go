@@ -309,6 +309,43 @@ func (c *Client) SubmitToolOutputs(
 	return
 }
 
+type SubmitToolOutputsStreamRequest struct {
+	SubmitToolOutputsRequest
+	Stream bool `json:"stream"`
+}
+
+func (c *Client) SubmitToolOutputsStream(
+	ctx context.Context,
+	threadID string,
+	runID string,
+	request SubmitToolOutputsRequest,
+) (stream *AssistantStream, err error) {
+	urlSuffix := fmt.Sprintf("/threads/%s/runs/%s/submit_tool_outputs", threadID, runID)
+	r := SubmitToolOutputsStreamRequest{
+		SubmitToolOutputsRequest: request,
+		Stream:                   true,
+	}
+	req, err := c.newRequest(
+		ctx,
+		http.MethodPost,
+		c.fullURL(urlSuffix),
+		withBody(r),
+		withBetaAssistantV1(),
+	)
+	if err != nil {
+		return
+	}
+
+	resp, err := sendRequestStream[AssistantStreamEvent](c, req)
+	if err != nil {
+		return
+	}
+	stream = &AssistantStream{
+		streamReader: resp,
+	}
+	return
+}
+
 // CancelRun cancels a run.
 func (c *Client) CancelRun(
 	ctx context.Context,
