@@ -346,18 +346,47 @@ func (c *Client) CreateThreadAndRun(
 	return
 }
 
-type AssistantStreamEventDelta struct {
+type StreamMessageDelta struct {
 	Role    string           `json:"role"`
 	Content []MessageContent `json:"content"`
 	FileIDs []string         `json:"file_ids"`
 }
 
 type AssistantStreamEvent struct {
-	ID     string                    `json:"id"`
-	Object string                    `json:"object"`
-	Delta  AssistantStreamEventDelta `json:"delta"`
-	// CreatedAt int64                     `json:"created_at"`
-	// Metadata  map[string]any            `json:"metadata"`
+	ID     string             `json:"id"`
+	Object string             `json:"object"`
+	Delta  StreamMessageDelta `json:"delta,omitempty"`
+
+	// Run
+	CreatedAt      int64              `json:"created_at,omitempty"`
+	ThreadID       string             `json:"thread_id,omitempty"`
+	AssistantID    string             `json:"assistant_id,omitempty"`
+	Status         RunStatus          `json:"status,omitempty"`
+	RequiredAction *RunRequiredAction `json:"required_action,omitempty"`
+	LastError      *RunLastError      `json:"last_error,omitempty"`
+	ExpiresAt      int64              `json:"expires_at,omitempty"`
+	StartedAt      *int64             `json:"started_at,omitempty"`
+	CancelledAt    *int64             `json:"cancelled_at,omitempty"`
+	FailedAt       *int64             `json:"failed_at,omitempty"`
+	CompletedAt    *int64             `json:"completed_at,omitempty"`
+	Model          string             `json:"model,omitempty"`
+	Instructions   string             `json:"instructions,omitempty"`
+	Tools          []Tool             `json:"tools,omitempty"`
+	FileIDS        []string           `json:"file_ids"` //nolint:revive // backwards-compatibility
+	Metadata       map[string]any     `json:"metadata,omitempty"`
+	Usage          Usage              `json:"usage,omitempty"`
+
+	// ThreadMessage.Completed
+	Role    string           `json:"role,omitempty"`
+	Content []MessageContent `json:"content,omitempty"`
+	// IncompleteDetails
+	// IncompleteAt
+
+	// Run steps
+	RunID       string      `json:"run_id"`
+	Type        RunStepType `json:"type"`
+	StepDetails StepDetails `json:"step_details"`
+	ExpiredAt   *int64      `json:"expired_at,omitempty"`
 }
 
 type AssistantStream struct {
